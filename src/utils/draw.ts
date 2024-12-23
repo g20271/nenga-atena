@@ -98,14 +98,29 @@ export const drawFamilyImage = async (
     family.consecutiveName3,
   ].filter((name) => name.length > 0);
   const maxPersonalNameLength = Math.max(...names.map((name) => name.length));
+  for (let i = 0; i < names.length; i++) {
+    names[i] = justifyName(names[i], maxPersonalNameLength);
+  }
   const familyName =
-    family.familyName + (family.familyName.length + maxPersonalNameLength < 4 ? '　' : '');
+    family.familyName + (family.familyName.length + maxPersonalNameLength < 8 ? '　' : '');
 
   for (let namei = 0; namei < names.length; namei++) {
     const x = positions.name[0] - namei * lineHeights.name;
     const name = consistentAddress(
       (namei === 0 ? familyName : '　'.repeat(familyName.length)) + names[namei],
     );
+    // for (let i = 0; i < name.length; i++) {
+    //   const y = positions.name[1] + fontSizes.name * i;
+    //   drawLineChars(
+    //     name[i],
+    //     [x, y],
+    //     fontName,
+    //     fontSizes.name,
+    //     fontSizes.name,
+    //     true,
+    //     context,
+    //   );
+    // }
     drawLineChars(
       name,
       [x, positions.name[1]],
@@ -129,6 +144,24 @@ export const drawFamilyImage = async (
     );
   }
 };
+
+function justifyName(str: string, maxLen: number) {
+  const diff = maxLen - str.length;
+  if (diff <= 0) return str;
+  const intervals = Math.max(1, str.length - 1);
+  const quotient = Math.floor(diff / intervals);
+  let remainder = diff % intervals;
+  let result = '';
+  for (let i = 0; i < str.length; i++) {
+    result += str[i];
+    if (i < str.length - 1) {
+      let spaceCount = quotient + (remainder > 0 ? 1 : 0);
+      if (remainder > 0) remainder--;
+      result += '　'.repeat(spaceCount);
+    }
+  }
+  return result;
+}
 
 export const outputPdf = async (
   families: Family[],
