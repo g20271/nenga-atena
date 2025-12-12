@@ -1,4 +1,4 @@
-export type Part = 'postalCode' | 'address' | 'name';
+export type Part = 'postalCode' | 'address' | 'name' | 'senderPostalCode' | 'senderAddress' | 'senderName';
 
 export type Positions = { [key in Part]: [number, number] };
 export type FontSizes = { [key in Part]: number };
@@ -10,6 +10,8 @@ export const saveStylesToLocalStorage = (
   lineHeights: LineHeights,
   addressMaxChars: number,
   postalCodeAdvance: number,
+  senderAddressMaxChars: number,
+  senderPostalCodeAdvance: number,
 ) => {
   const json = JSON.stringify({
     positions,
@@ -17,6 +19,8 @@ export const saveStylesToLocalStorage = (
     lineHeights,
     addressMaxChars,
     postalCodeAdvance,
+    senderAddressMaxChars,
+    senderPostalCodeAdvance,
   });
   localStorage.setItem('styles', json);
 };

@@ -30,12 +30,16 @@ interface PostCardSettingsProps {
   lineHeights: LineHeights;
   addressMaxChars: number;
   postalCodeAdvance: number;
+  senderAddressMaxChars: number;
+  senderPostalCodeAdvance: number;
   setSelectedPart(value: Part): void;
   setPositions: (value: Positions) => void;
   setFontSizes: (value: FontSizes) => void;
   setLineHeights: (value: LineHeights) => void;
   setAddressMaxChars: (value: number) => void;
   setPostalCodeAdvance: (value: number) => void;
+  setSenderAddressMaxChars: (value: number) => void;
+  setSenderPostalCodeAdvance: (value: number) => void;
 }
 
 const PostCardSettings = ({
@@ -45,17 +49,27 @@ const PostCardSettings = ({
   lineHeights,
   addressMaxChars,
   postalCodeAdvance,
+  senderAddressMaxChars,
+  senderPostalCodeAdvance,
   setSelectedPart,
   setPositions,
   setFontSizes,
   setLineHeights,
   setAddressMaxChars,
   setPostalCodeAdvance,
+  setSenderAddressMaxChars,
+  setSenderPostalCodeAdvance,
 }: PostCardSettingsProps) => {
-  const partItems: { key: Part; label: string }[] = [
+  const addressPartItems: { key: Part; label: string }[] = [
     { key: 'name', label: '名前' },
     { key: 'address', label: '住所' },
     { key: 'postalCode', label: '郵便番号' },
+  ];
+
+  const senderPartItems: { key: Part; label: string }[] = [
+    { key: 'senderName', label: '差出人名' },
+    { key: 'senderAddress', label: '差出人住所' },
+    { key: 'senderPostalCode', label: '差出人〒' },
   ];
 
   const changePosition = (e: React.ChangeEvent<HTMLInputElement>, x: boolean) => {
@@ -84,10 +98,23 @@ const PostCardSettings = ({
     setPostalCodeAdvance(parseFloat(e.target.value));
   };
 
+  const changeSenderAddressMaxChars = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSenderAddressMaxChars(parseInt(e.target.value));
+  };
+
+  const changeSenderPostalCodeAdvance = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSenderPostalCodeAdvance(parseFloat(e.target.value));
+  };
+
   return (
     <div>
       <SwitchButton<Part>
-        items={partItems}
+        items={addressPartItems}
+        selectedItem={selectedPart}
+        setSelectedItem={setSelectedPart}
+      />
+      <SwitchButton<Part>
+        items={senderPartItems}
         selectedItem={selectedPart}
         setSelectedItem={setSelectedPart}
       />
@@ -162,6 +189,30 @@ const PostCardSettings = ({
               onChange={changePostalCodeAdvance}
             />{' '}
             mm（{postalCodeAdvance * 4} Q）
+          </DetailedLine>
+        )}
+        {selectedPart === 'senderAddress' && (
+          <DetailedLine>
+            <LeftLabel>最大字数</LeftLabel>
+            <Input
+              type="number"
+              length={4}
+              value={senderAddressMaxChars}
+              onChange={changeSenderAddressMaxChars}
+            />
+          </DetailedLine>
+        )}
+        {selectedPart === 'senderPostalCode' && (
+          <DetailedLine>
+            <LeftLabel>字送り</LeftLabel>
+            <Input
+              type="number"
+              length={4}
+              value={senderPostalCodeAdvance}
+              step={0.5}
+              onChange={changeSenderPostalCodeAdvance}
+            />{' '}
+            mm（{senderPostalCodeAdvance * 4} Q）
           </DetailedLine>
         )}
       </Details>
