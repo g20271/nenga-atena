@@ -12,6 +12,13 @@ import {
   saveFamiliesToLocalStorage,
   Family,
 } from '../utils/family';
+import {
+  createEmptySender,
+  readSenderCsv,
+  saveSenderCsv,
+  saveSenderToLocalStorage,
+  Sender,
+} from '../utils/sender';
 import { outputPdf } from '../utils/draw';
 import { saveStylesToLocalStorage, FontSizes, LineHeights, Positions } from '../utils/style';
 
@@ -54,48 +61,89 @@ const App = () => {
   const [editsCsv, setEditsCsv] = useState(false);
   const [displaysOnlyPrintable, setDisplaysOnlyPrintable] = useState(false);
 
+  // sender
+  const [sender, setSender] = useState<Sender>(createEmptySender());
+
   // styles
   const [positions, setPositions] = useState<Positions>({
     postalCode: [45, 11.75],
     address: [90, 30],
     name: [62, 48],
+    senderPostalCode: [6.5, 123],
+    senderAddress: [30, 70],
+    senderName: [18, 80],
   });
   const [fontSizes, setFontSizes] = useState<FontSizes>({
     postalCode: 8,
     address: 5,
     name: 10,
+    senderPostalCode: 5,
+    senderAddress: 3.5,
+    senderName: 5,
   });
   const [lineHeights, setLineHeights] = useState<LineHeights>({
     postalCode: 8,
     address: 7,
     name: 13,
+    senderPostalCode: 4,
+    senderAddress: 5,
+    senderName: 7,
   });
   const [addressMaxChars, setAddressMaxChars] = useState<number>(12);
   const [postalCodeAdvance, setPostalCodeAdvance] = useState<number>(7);
+  const [senderAddressMaxChars, setSenderAddressMaxChars] = useState<number>(16);
+  const [senderPostalCodeAdvance, setSenderPostalCodeAdvance] = useState<number>(4.1);
 
   const updatePositions = (value: Positions) => {
     setPositions(value);
-    saveStylesToLocalStorage(value, fontSizes, lineHeights, addressMaxChars, postalCodeAdvance);
+    saveStylesToLocalStorage(value, fontSizes, lineHeights, addressMaxChars, postalCodeAdvance, senderAddressMaxChars, senderPostalCodeAdvance);
   };
 
   const updateFontSizes = (value: FontSizes) => {
     setFontSizes(value);
-    saveStylesToLocalStorage(positions, value, lineHeights, addressMaxChars, postalCodeAdvance);
+    saveStylesToLocalStorage(positions, value, lineHeights, addressMaxChars, postalCodeAdvance, senderAddressMaxChars, senderPostalCodeAdvance);
   };
 
   const updateLineHeights = (value: LineHeights) => {
     setLineHeights(value);
-    saveStylesToLocalStorage(positions, fontSizes, value, addressMaxChars, postalCodeAdvance);
+    saveStylesToLocalStorage(positions, fontSizes, value, addressMaxChars, postalCodeAdvance, senderAddressMaxChars, senderPostalCodeAdvance);
   };
 
   const updateAddressMaxChars = (value: number) => {
     setAddressMaxChars(value);
-    saveStylesToLocalStorage(positions, fontSizes, lineHeights, value, postalCodeAdvance);
+    saveStylesToLocalStorage(positions, fontSizes, lineHeights, value, postalCodeAdvance, senderAddressMaxChars, senderPostalCodeAdvance);
   };
 
   const updatePostalCodeAdvance = (value: number) => {
     setPostalCodeAdvance(value);
-    saveStylesToLocalStorage(positions, fontSizes, lineHeights, addressMaxChars, value);
+    saveStylesToLocalStorage(positions, fontSizes, lineHeights, addressMaxChars, value, senderAddressMaxChars, senderPostalCodeAdvance);
+  };
+
+  const updateSenderAddressMaxChars = (value: number) => {
+    setSenderAddressMaxChars(value);
+    saveStylesToLocalStorage(positions, fontSizes, lineHeights, addressMaxChars, postalCodeAdvance, value, senderPostalCodeAdvance);
+  };
+
+  const updateSenderPostalCodeAdvance = (value: number) => {
+    setSenderPostalCodeAdvance(value);
+    saveStylesToLocalStorage(positions, fontSizes, lineHeights, addressMaxChars, postalCodeAdvance, senderAddressMaxChars, value);
+  };
+
+  // sender
+  const updateSender = (value: Sender) => {
+    setSender(value);
+    saveSenderToLocalStorage(value);
+  };
+
+  const updateSenderCsvData = (csv: string) => {
+    const newSender = readSenderCsv(csv);
+    if (newSender) {
+      updateSender(newSender);
+    }
+  };
+
+  const saveSenderCsvWrapper = () => {
+    saveSenderCsv(sender);
   };
 
   // family
@@ -130,11 +178,14 @@ const App = () => {
   const outputPdfWrapper = () => {
     outputPdf(
       selectedFamilies,
+      sender,
       positions,
       fontSizes,
       lineHeights,
       addressMaxChars,
       postalCodeAdvance,
+      senderAddressMaxChars,
+      senderPostalCodeAdvance,
     );
   };
 
@@ -147,6 +198,12 @@ const App = () => {
       if (Array.isArray(familyArray)) {
         updateFamilies(familyArray);
       }
+    }
+
+    const senderJson = localStorage.getItem('sender');
+    if (senderJson) {
+      const senderData = JSON.parse(senderJson);
+      setSender(senderData);
     }
 
     const stylesJson = localStorage.getItem('styles');
@@ -162,6 +219,12 @@ const App = () => {
         setLineHeights(styles.lineHeights);
         setAddressMaxChars(styles.addressMaxChars);
         setPostalCodeAdvance(styles.postalCodeAdvance);
+        if ('senderAddressMaxChars' in styles) {
+          setSenderAddressMaxChars(styles.senderAddressMaxChars);
+        }
+        if ('senderPostalCodeAdvance' in styles) {
+          setSenderPostalCodeAdvance(styles.senderPostalCodeAdvance);
+        }
       }
     }
   }, []);
@@ -184,18 +247,26 @@ const App = () => {
           <Left
             selectedFamilies={selectedFamilies}
             selectedFamilyIndex={selectedFamilyIndex}
+            sender={sender}
             positions={positions}
             fontSizes={fontSizes}
             lineHeights={lineHeights}
             addressMaxChars={addressMaxChars}
             postalCodeAdvance={postalCodeAdvance}
+            senderAddressMaxChars={senderAddressMaxChars}
+            senderPostalCodeAdvance={senderPostalCodeAdvance}
             setPreviousFamilyIndex={setPreviousFamilyIndex}
             setNextFamilyIndex={setNextFamilyIndex}
+            setSender={updateSender}
             setPositions={updatePositions}
             setFontSizes={updateFontSizes}
             setLineHeights={updateLineHeights}
             setAddressMaxChars={updateAddressMaxChars}
             setPostalCodeAdvance={updatePostalCodeAdvance}
+            setSenderAddressMaxChars={updateSenderAddressMaxChars}
+            setSenderPostalCodeAdvance={updateSenderPostalCodeAdvance}
+            updateSenderCsvData={updateSenderCsvData}
+            saveSenderCsv={saveSenderCsvWrapper}
           />
         </LeftWrapper>
         <Right>

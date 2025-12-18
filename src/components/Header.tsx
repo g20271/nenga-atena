@@ -101,6 +101,7 @@ export const Header = ({
         <ButtonLabel>
           <CautionButton type="button" value="住所録を削除" onClick={removeAllAddresses} />
         </ButtonLabel>
+        <VerticalLine />
         <label>
           <input type="checkbox" onChange={changeEditsCsv} checked={editsCsv} />
           CSV を直接編集

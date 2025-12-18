@@ -1,6 +1,7 @@
 import { PDFDocument, PDFImage } from 'pdf-lib';
 import { consistentAddress, Family } from './family';
 import { drawPath, loadFont } from './font';
+import { isSenderEmpty, Sender } from './sender';
 import { FontSizes, LineHeights, Positions } from './style';
 
 const dpi = 350;
@@ -33,11 +34,14 @@ export const drawLineChars = (
 
 export const drawFamilyImage = async (
   family: Family,
+  sender: Sender,
   positions: Positions,
   fontSizes: FontSizes,
   lineHeights: LineHeights,
   addressMaxChars: number,
   postalCodeAdvance: number,
+  senderAddressMaxChars: number,
+  senderPostalCodeAdvance: number,
   canvas: HTMLCanvasElement,
   context: CanvasRenderingContext2D,
 ) => {
@@ -143,6 +147,77 @@ export const drawFamilyImage = async (
       context,
     );
   }
+
+  // sender
+  if (!isSenderEmpty(sender)) {
+    // sender postal code
+    drawLineChars(
+      sender.postalCode,
+      positions.senderPostalCode,
+      fontName,
+      fontSizes.senderPostalCode,
+      senderPostalCodeAdvance,
+      false,
+      context,
+    );
+
+    // sender address
+    const senderAddress0 = consistentAddress(sender.prefecture + sender.municipalities);
+    const senderAddress1 = consistentAddress(sender.address);
+    const senderAddress2 = consistentAddress(sender.building);
+
+    const senderAddressLines: string[] = [senderAddress0];
+    if (senderAddressLines.at(-1)!.length + senderAddress1.length > senderAddressMaxChars) {
+      senderAddressLines.push('');
+    }
+    senderAddressLines[senderAddressLines.length - 1] += senderAddress1;
+    if (senderAddressLines.at(-1)!.length + senderAddress2.length > senderAddressMaxChars) {
+      senderAddressLines.push('');
+    }
+    senderAddressLines[senderAddressLines.length - 1] += senderAddress2;
+
+    for (let linei = 0; linei < senderAddressLines.length; linei++) {
+      drawLineChars(
+        senderAddressLines[linei],
+        [
+          positions.senderAddress[0] - lineHeights.senderAddress * linei,
+          positions.senderAddress[1] + fontSizes.senderAddress * linei,
+        ],
+        fontName,
+        fontSizes.senderAddress,
+        fontSizes.senderAddress,
+        true,
+        context,
+      );
+    }
+
+    // sender name
+    const senderNames = [
+      sender.personalName,
+      sender.consecutiveName1,
+      sender.consecutiveName2,
+      sender.consecutiveName3,
+    ].filter((name) => name.length > 0);
+    const maxSenderPersonalNameLength = Math.max(...senderNames.map((name) => name.length));
+    const senderFamilyName =
+      sender.familyName + (sender.familyName.length + maxSenderPersonalNameLength < 4 ? '　' : '');
+
+    for (let namei = 0; namei < senderNames.length; namei++) {
+      const x = positions.senderName[0] - namei * lineHeights.senderName;
+      const name = consistentAddress(
+        (namei === 0 ? senderFamilyName : '　'.repeat(senderFamilyName.length)) + senderNames[namei],
+      );
+      drawLineChars(
+        name,
+        [x, positions.senderName[1]],
+        fontName,
+        fontSizes.senderName,
+        fontSizes.senderName,
+        true,
+        context,
+      );
+    }
+  }
 };
 
 function justifyName(str: string, maxLen: number) {
@@ -165,11 +240,14 @@ function justifyName(str: string, maxLen: number) {
 
 export const outputPdf = async (
   families: Family[],
+  sender: Sender,
   positions: Positions,
   fontSizes: FontSizes,
   lineHeights: LineHeights,
   addressMaxChars: number,
   postalCodeAdvance: number,
+  senderAddressMaxChars: number,
+  senderPostalCodeAdvance: number,
 ) => {
   const widthPt = mmToPt(width);
   const heightPt = mmToPt(height);
@@ -187,11 +265,14 @@ export const outputPdf = async (
   for (const family of families) {
     await drawFamilyImage(
       family,
+      sender,
       positions,
       fontSizes,
       lineHeights,
       addressMaxChars,
       postalCodeAdvance,
+      senderAddressMaxChars,
+      senderPostalCodeAdvance,
       canvas,
       context,
     );

@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { drawLineChars, mmToCanvasPx } from '../utils/draw';
 import { Family } from '../utils/family';
+import { Sender } from '../utils/sender';
 import { drawFamilyImage } from '../utils/draw';
 import { FontSizes, LineHeights, Part, Positions } from '../utils/style';
 
@@ -39,11 +40,14 @@ const BgImg = styled.img`
 interface PostCardProps {
   families: Family[];
   selectedFamilyIndex: number;
+  sender: Sender;
   positions: Positions;
   fontSizes: FontSizes;
   lineHeights: LineHeights;
   addressMaxChars: number;
   postalCodeAdvance: number;
+  senderAddressMaxChars: number;
+  senderPostalCodeAdvance: number;
   selectedPart: Part;
   setSelectedPart: (part: Part) => void;
 }
@@ -51,11 +55,14 @@ interface PostCardProps {
 const PostCard = ({
   families,
   selectedFamilyIndex,
+  sender,
   positions,
   fontSizes,
   lineHeights,
   addressMaxChars,
   postalCodeAdvance,
+  senderAddressMaxChars,
+  senderPostalCodeAdvance,
   selectedPart,
   setSelectedPart,
 }: PostCardProps) => {
@@ -74,7 +81,7 @@ const PostCard = ({
       return (mm / 100) * 300;
     };
 
-    const parts: Part[] = ['name', 'address', 'postalCode'];
+    const parts: Part[] = ['name', 'address', 'postalCode', 'senderName', 'senderAddress', 'senderPostalCode'];
     for (const part of parts) {
       const left = mmToScreenPx(positions[part][0] - 4);
       const right = mmToScreenPx(positions[part][0] + 4);
@@ -98,7 +105,7 @@ const PostCard = ({
     context.clearRect(0, 0, canvasBorderRef.current.width, canvasBorderRef.current.height);
     context.lineWidth = 4;
 
-    const parts: Part[] = ['name', 'address', 'postalCode'];
+    const parts: Part[] = ['name', 'address', 'postalCode', 'senderName', 'senderAddress', 'senderPostalCode'];
     for (const part of parts) {
       context.strokeStyle = selectedPart === part ? '#00f' : '#ccc';
       context.beginPath();
@@ -118,11 +125,14 @@ const PostCard = ({
     if (context && selectedFamilyIndex >= 0 && selectedFamilyIndex < families.length) {
       drawFamilyImage(
         families[selectedFamilyIndex],
+        sender,
         positions,
         fontSizes,
         lineHeights,
         addressMaxChars,
         postalCodeAdvance,
+        senderAddressMaxChars,
+        senderPostalCodeAdvance,
         canvasRef.current,
         context,
       );
@@ -130,11 +140,14 @@ const PostCard = ({
   }, [
     families,
     selectedFamilyIndex,
+    sender,
     positions,
     fontSizes,
     lineHeights,
     addressMaxChars,
     postalCodeAdvance,
+    senderAddressMaxChars,
+    senderPostalCodeAdvance,
   ]);
 
   return (
